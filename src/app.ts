@@ -3,29 +3,8 @@ import express, {
   type Request,
   type Response,
 } from "express";
-import { Pool } from "pg";
-import config from "./config";
+import { initDB, pool } from "./db";
 const app: Application = express();
-const port = 3001;
-const pool = new Pool({
-  connectionString: config.connection_string,
-});
-const initDB = async () => {
-  try {
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS users(
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(20),
-        email VARCHAR(20) UNIQUE NOT NULL,
-        password VARCHAR(20) NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-        )
-        `);
-    console.log("Database connected");
-  } catch (error) {}
-};
-initDB();
 
 app.use(express.json());
 
@@ -106,6 +85,4 @@ app.delete("/users/:id", async (req: Request, res: Response) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+export default app;
