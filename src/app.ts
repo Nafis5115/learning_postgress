@@ -4,6 +4,7 @@ import express, {
   type Response,
 } from "express";
 import { initDB, pool } from "./db";
+import { userRoute } from "./modules/user/user.route";
 const app: Application = express();
 
 app.use(express.json());
@@ -12,77 +13,6 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
 });
 
-app.post("/users", async (req: Request, res: Response) => {
-  const { name, email, password } = req.body;
-  try {
-    const result = await pool.query(
-      `
-        INSERT INTO users(name, email, password) VALUES($1, $2, $3) RETURNING *
-        `,
-      [name, email, password],
-    );
-    res.send({
-      data: result.rows[0],
-    });
-  } catch (error: any) {
-    res.send({
-      error: error.message,
-    });
-  }
-});
-
-app.get("/users", async (req: Request, res: Response) => {
-  try {
-    const users = await pool.query(`SELECT * FROM users`);
-    res.send(users.rows);
-  } catch (error: any) {
-    res.send({
-      error: error.message,
-    });
-  }
-});
-
-app.put("/users/:id", async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { name, email, password } = req.body;
-  const result = await pool.query(
-    `
-    UPDATE users
-    SET name = COALESCE($1, name), 
-    email = COALESCE ($2, email), 
-    password = COALESCE ($3, password)
-    WHERE id = $4
-    RETURNING *
-    `,
-    [name, email, password, id],
-  );
-  if (result.rows.length === 0) {
-    return res.status(201).send({
-      message: "User not found",
-    });
-  }
-  res.status(201).send({
-    data: result,
-  });
-});
-
-app.delete("/users/:id", async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const result = await pool.query(
-    `
-    DELETE FROM users WHERE id = $1
-    RETURNING *
-    `,
-    [id],
-  );
-  if (result.rows.length === 0) {
-    return res.status(201).send({
-      message: "User not found",
-    });
-  }
-  res.status(201).send({
-    data: result,
-  });
-});
+app.use("/api/users", userRoute);
 
 export default app;
